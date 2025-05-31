@@ -241,4 +241,3 @@ export function StudentHomeworkStatus({ studentId, status }: StudentHomeworkStat
     </div>
   )
 }
-

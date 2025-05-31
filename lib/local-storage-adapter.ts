@@ -51,4 +51,3 @@ class LocalStorageAdapter implements StorageAdapter {
 // Export a singleton instance
 const storageAdapter: StorageAdapter = new LocalStorageAdapter()
 export default storageAdapter
-

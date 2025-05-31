@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { CalendarDays, GraduationCap, HelpCircle, ListChecks, Users } from "lucide-react"
+import { CalendarDays, GraduationCap, HelpCircle, ListChecks, Users, FileText, BarChart3, Mail } from "lucide-react"
 import { RecentAssignments } from "@/components/recent-assignments"
 import { UpcomingDeadlines } from "@/components/upcoming-deadlines"
 import { StudentProgress } from "@/components/student-progress"
@@ -13,35 +13,49 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-// Update the import to use default export if needed
 import TutorialContent from "@/components/tutorial-content"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { IntegrationStatus } from "@/components/integration-status"
 
 export default function DashboardPage() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-gradient-to-b from-white to-blue-50 dark:from-gray-950 dark:to-blue-950">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight text-blue-800 dark:text-blue-300">대시보드</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950 dark:hover:text-blue-200"
-            >
-              <HelpCircle className="h-4 w-4" />
-              사용 가이드
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl h-[80vh]">
-            <DialogHeader>
-              <DialogTitle className="text-blue-700 dark:text-blue-300">학생 숙제 관리 시스템 사용 가이드</DialogTitle>
-              <DialogDescription>시스템 사용 방법에 대한 상세한 안내입니다.</DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="h-full pr-4">
-              <TutorialContent />
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outline"
+            className="gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950 dark:hover:text-blue-200"
+            asChild
+          >
+            <a href="https://docs.google.com/forms/u/0/" target="_blank" rel="noopener noreferrer">
+              <FileText className="h-4 w-4" />
+              구글 폼 열기
+            </a>
+          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button
+                variant="outline"
+                className="gap-1.5 border-blue-200 text-blue-700 hover:bg-blue-50 hover:text-blue-800 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950 dark:hover:text-blue-200"
+              >
+                <HelpCircle className="h-4 w-4" />
+                사용 가이드
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl h-[80vh]">
+              <DialogHeader>
+                <DialogTitle className="text-blue-700 dark:text-blue-300">
+                  학생 숙제 관리 시스템 사용 가이드
+                </DialogTitle>
+                <DialogDescription>시스템 사용 방법에 대한 상세한 안내입니다.</DialogDescription>
+              </DialogHeader>
+              <ScrollArea className="h-full pr-4">
+                <TutorialContent />
+              </ScrollArea>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="bg-white dark:bg-gray-900 border border-blue-100 dark:border-blue-900">
@@ -56,6 +70,12 @@ export default function DashboardPage() {
             className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-200"
           >
             분석
+          </TabsTrigger>
+          <TabsTrigger
+            value="integrations"
+            className="data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 dark:data-[state=active]:bg-blue-900 dark:data-[state=active]:text-blue-200"
+          >
+            통합 서비스
           </TabsTrigger>
         </TabsList>
         <TabsContent value="overview" className="space-y-4">
@@ -181,9 +201,42 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="border-blue-100 dark:border-blue-900">
+              <CardHeader>
+                <CardTitle className="text-blue-700 dark:text-blue-300">학생별 성적 분석</CardTitle>
+                <CardDescription>학생별 성적 분포 및 추이입니다.</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <div className="flex h-full items-center justify-center text-blue-600/70 dark:text-blue-400/70">
+                  <Button variant="outline" className="gap-1.5">
+                    <BarChart3 className="h-4 w-4" />
+                    Google Sheets 성적 분석 보기
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="border-blue-100 dark:border-blue-900">
+              <CardHeader>
+                <CardTitle className="text-blue-700 dark:text-blue-300">학부모 소통 현황</CardTitle>
+                <CardDescription>학부모와의 소통 현황 및 통계입니다.</CardDescription>
+              </CardHeader>
+              <CardContent className="h-[300px]">
+                <div className="flex h-full flex-col items-center justify-center gap-4 text-blue-600/70 dark:text-blue-400/70">
+                  <p>최근 30일간 발송된 알림: 156건</p>
+                  <Button variant="outline" className="gap-1.5">
+                    <Mail className="h-4 w-4" />
+                    알림 발송 내역 보기
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="integrations" className="space-y-4">
+          <IntegrationStatus />
         </TabsContent>
       </Tabs>
     </div>
   )
 }
-

@@ -11,4 +11,3 @@ export const motion = {
   ul: (props: HTMLMotionProps<"ul">) => <framerMotion.ul {...props} />,
   li: (props: HTMLMotionProps<"li">) => <framerMotion.li {...props} />,
 }
-

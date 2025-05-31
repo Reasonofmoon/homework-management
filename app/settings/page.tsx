@@ -1,14 +1,16 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ExportImportData } from "@/components/export-import-data"
+import { NotificationSettings } from "@/components/notification-settings"
+import { GradeAnalytics } from "@/components/grade-analytics"
 
 export default function SettingsPage() {
   return (
-    <div className="flex-1 space-y-4">
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">설정</h2>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2">
         <ExportImportData />
 
         <Card>
@@ -51,7 +53,11 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <NotificationSettings />
+        <GradeAnalytics />
+      </div>
     </div>
   )
 }
-

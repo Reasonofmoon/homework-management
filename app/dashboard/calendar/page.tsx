@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { format, isSameDay, addMonths, subMonths, parseISO, isValid } from "date-fns"
-import { ko } from "date-fns/locale"
+import ko from "date-fns/locale/ko"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import {
   DropdownMenu,
@@ -51,7 +51,8 @@ interface Assignment {
   description: string
   dueDate: string // ISO date string
   assignedTo: string[]
-  status: "active" | "completed"
+  status: "todo" | "in-progress" | "completed"
+  priority: "low" | "medium" | "high"
 }
 
 export default function CalendarPage() {
@@ -77,7 +78,8 @@ export default function CalendarPage() {
       description: "Dragon Masters 5권의 챕터 1부터 5까지 읽고 내용 요약하기",
       dueDate: new Date(2025, 2, 27).toISOString(), // 2025년 3월 27일
       assignedTo: ["전체 학생"],
-      status: "active",
+      status: "todo",
+      priority: "medium",
     },
     {
       id: "2",
@@ -85,7 +87,8 @@ export default function CalendarPage() {
       description: "퀴즐릿 앱에서 이번 주 단어 학습하기",
       dueDate: new Date(2025, 2, 27).toISOString(), // 2025년 3월 27일
       assignedTo: ["전체 학생"],
-      status: "active",
+      status: "in-progress",
+      priority: "high",
     },
     {
       id: "3",
@@ -93,7 +96,8 @@ export default function CalendarPage() {
       description: "어휘 시험 준비 및 복습",
       dueDate: new Date(2025, 2, 29).toISOString(), // 2025년 3월 29일
       assignedTo: ["A반"],
-      status: "active",
+      status: "todo",
+      priority: "high",
     },
     {
       id: "4",
@@ -101,7 +105,8 @@ export default function CalendarPage() {
       description: "소리 모닝 학습 완료하기",
       dueDate: new Date(2025, 2, 31).toISOString(), // 2025년 3월 31일
       assignedTo: ["B반"],
-      status: "active",
+      status: "completed",
+      priority: "medium",
     },
     {
       id: "5",
@@ -109,7 +114,8 @@ export default function CalendarPage() {
       description: "어휘 501-525 학습 및 암기",
       dueDate: new Date(2025, 2, 24).toISOString(), // 2025년 3월 24일
       assignedTo: ["김온유"],
-      status: "active",
+      status: "in-progress",
+      priority: "medium",
     },
     {
       id: "6",
@@ -117,7 +123,8 @@ export default function CalendarPage() {
       description: "어휘 751-775 스펠링 연습",
       dueDate: new Date(2025, 2, 24).toISOString(), // 2025년 3월 24일
       assignedTo: ["김석준"],
-      status: "active",
+      status: "completed",
+      priority: "low",
     },
     {
       id: "7",
@@ -318,6 +325,11 @@ export default function CalendarPage() {
     }
   }
 
+  // Replace react-beautiful-dnd with a simpler implementation
+  const handleReorder = (assignments: Assignment[]) => {
+    setAssignments([...assignments])
+  }
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -428,6 +440,7 @@ export default function CalendarPage() {
         </div>
       </div>
 
+      {/* Calendar */}
       <div className="grid gap-6 grid-cols-1">
         <Card className="col-span-1 shadow-sm border-gray-200 dark:border-gray-800 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
@@ -488,7 +501,7 @@ export default function CalendarPage() {
         </Card>
       </div>
 
-      {/* 선택한 날짜의 숙제 목록 */}
+      {/* Selected Date Assignments */}
       <Card className="shadow-sm border-gray-200 dark:border-gray-800 overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800">
           <div>
@@ -503,7 +516,7 @@ export default function CalendarPage() {
           <ScrollArea className="h-[300px] pr-4">
             {selectedDateAssignments.length > 0 ? (
               <div className="space-y-3">
-                {selectedDateAssignments.map((assignment) => (
+                {selectedDateAssignments.map((assignment, index) => (
                   <motion.div
                     key={assignment.id}
                     className="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-all"
@@ -572,7 +585,7 @@ export default function CalendarPage() {
         </CardContent>
       </Card>
 
-      {/* 이벤트 상세 정보 다이얼로그 */}
+      {/* Event Details Dialog */}
       <Dialog open={showEventDetails} onOpenChange={setShowEventDetails}>
         <DialogContent className="max-w-md">
           <DialogHeader>
@@ -645,4 +658,3 @@ export default function CalendarPage() {
     </div>
   )
 }
-

@@ -1,6 +1,6 @@
 import type React from "react"
 import "@/app/globals.css"
-import { Inter } from "next/font/google"
+import localFont from "next/font/local"
 import { ThemeProvider } from "@/components/theme-provider"
 import { MainNav } from "@/components/main-nav"
 import { UserNav } from "@/components/user-nav"
@@ -9,7 +9,12 @@ import { HelpButton } from "@/components/help-button"
 import { LocalModeBanner } from "@/components/local-mode-banner"
 import { Toaster } from "@/components/toaster"
 
-const inter = Inter({ subsets: ["latin"] })
+// Use local font instead of Google Fonts for static export
+const inter = localFont({
+  src: "../public/fonts/inter.woff2",
+  display: "swap",
+  variable: "--font-inter",
+})
 
 export const metadata = {
   title: "학생 숙제 관리 시스템 - Reason of Moon",
@@ -48,7 +53,3 @@ export default function RootLayout({
     </html>
   )
 }
-
-
-
-import './globals.css'
