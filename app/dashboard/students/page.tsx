@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -31,7 +31,8 @@ import { StudentHomeworkStatus } from "@/components/student-homework-status"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useLocalStorage } from "@/hooks/use-local-storage"
 import { useClasses } from "@/hooks/use-classes"
-import { ClassManagement } from "@/components/class-management"
+import { EnhancedClassManagement } from "@/components/enhanced-class-management"
+import { StudentClassValidator } from "@/components/student-class-validator"
 
 // 학생 데이터 타입 정의
 interface Student {
@@ -65,6 +66,28 @@ export default function StudentsPage() {
 
   const { classes } = useClasses()
 
+  useEffect(() => {
+    // Clean up students assigned to deleted classes
+    const validClassNames = classes.map((c) => c.name)
+    const updatedStudents = students.map((student) => {
+      if (!validClassNames.includes(student.group)) {
+        // Assign to first available class or default class
+        return {
+          ...student,
+          group: validClassNames.length > 0 ? validClassNames[0] : "A반",
+        }
+      }
+      return student
+    })
+
+    // Only update if there were changes
+    const hasChanges = updatedStudents.some((student, index) => student.group !== students[index]?.group)
+
+    if (hasChanges) {
+      setStudents(updatedStudents)
+    }
+  }, [classes, students, setStudents])
+
   // 학생 검색 필터링
   const filteredStudents = students.filter(
     (student) =>
@@ -74,30 +97,78 @@ export default function StudentsPage() {
 
   // 새 학생 추가
   const addStudent = () => {
-    if (newStudent.name.trim() === "") return
+    if (newStudent.name.trim() === "") {
+      alert("학생 이름을 입력해주세요.")
+      return
+    }
 
-    const newId = (students.length + 1).toString()
+    // Validate that the selected class exists
+    const classExists = classes.some((c) => c.name === newStudent.group)
+    if (!classExists) {
+      alert("선택한 반이 존재하지 않습니다. 다시 선택해주세요.")
+      return
+    }
+
+    // Check for duplicate student names in the same class
+    const duplicateExists = students.some(
+      (s) => s.name.trim().toLowerCase() === newStudent.name.trim().toLowerCase() && s.group === newStudent.group,
+    )
+
+    if (duplicateExists) {
+      alert("같은 반에 동일한 이름의 학생이 이미 존재합니다.")
+      return
+    }
+
+    const newId = (Math.max(...students.map((s) => Number.parseInt(s.id)), 0) + 1).toString()
     setStudents([
       ...students,
       {
         id: newId,
-        name: newStudent.name,
+        name: newStudent.name.trim(),
         group: newStudent.group,
         status: "active",
         completionRate: 0,
       },
     ])
 
-    setNewStudent({ name: "", group: "A반" })
+    setNewStudent({ name: "", group: classes.length > 0 ? classes[0].name : "A반" })
     setShowAddDialog(false)
   }
 
   // 학생 정보 수정
   const editStudent = () => {
-    if (!editingStudent || editingStudent.name.trim() === "") return
+    if (!editingStudent || editingStudent.name.trim() === "") {
+      alert("학생 이름을 입력해주세요.")
+      return
+    }
 
-    setStudents(students.map((student) => (student.id === editingStudent.id ? editingStudent : student)))
+    // Validate that the selected class exists
+    const classExists = classes.some((c) => c.name === editingStudent.group)
+    if (!classExists) {
+      alert("선택한 반이 존재하지 않습니다. 다시 선택해주세요.")
+      return
+    }
+
+    // Check for duplicate student names in the same class (excluding current student)
+    const duplicateExists = students.some(
+      (s) =>
+        s.id !== editingStudent.id &&
+        s.name.trim().toLowerCase() === editingStudent.name.trim().toLowerCase() &&
+        s.group === editingStudent.group,
+    )
+
+    if (duplicateExists) {
+      alert("같은 반에 동일한 이름의 학생이 이미 존재합니다.")
+      return
+    }
+
+    setStudents(
+      students.map((student) =>
+        student.id === editingStudent.id ? { ...editingStudent, name: editingStudent.name.trim() } : student,
+      ),
+    )
     setShowEditDialog(false)
+    setEditingStudent(null)
   }
 
   // 학생 상태 변경
@@ -182,6 +253,15 @@ export default function StudentsPage() {
                 <DialogDescription>새로운 학생 정보를 입력하여 시스템에 등록합니다.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="name">이름</Label>
+                  <Input
+                    id="name"
+                    value={newStudent.name}
+                    onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
+                    placeholder="학생 이름"
+                  />
+                </div>
                 <div className="grid gap-2">
                   <Label htmlFor="group">반</Label>
                   <Select
@@ -298,10 +378,11 @@ export default function StudentsPage() {
       <Card className="mt-6">
         <CardHeader>
           <CardTitle>반 관리</CardTitle>
-          <CardDescription>학생들을 그룹화하기 위한 반을 관리합니다.</CardDescription>
+          <CardDescription>학생들을 그룹화하기 위한 반을 관리하고 데이터 무결성을 확인합니다.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <ClassManagement />
+        <CardContent className="space-y-6">
+          <EnhancedClassManagement />
+          <StudentClassValidator />
         </CardContent>
       </Card>
 
