@@ -28,33 +28,33 @@ This is a homework management application that allows teachers and students to m
 ### Installation
 
 1. **Clone the Repository:**
-   ```bash
+   \`\`\`bash
    git clone https://github.com/Reasonofmoon/homework-management.git
    cd homework-management
-   ```
+   \`\`\`
 
 2. **Install Dependencies:**
-   ```bash
+   \`\`\`bash
    npm install
    # or
    yarn install
-   ```
+   \`\`\`
 
 3. **Set Up Environment Variables:**
 
    Create a `.env.local` file in the root of the project with the following content:
-   ```env
+   \`\`\`env
    NEXT_PUBLIC_SUPABASE_URL=https://iegyqrnlvcjjjwryiilg.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
-   ```
+   \`\`\`
    **Note:** Do not commit any `.env` files to your repository. The provided `.gitignore` already excludes these files.
 
 4. **Run the Development Server:**
-   ```bash
+   \`\`\`bash
    npm run dev
    # or
    yarn dev
-   ```
+   \`\`\`
    Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Deployment
@@ -85,4 +85,4 @@ Contributions are welcome! Please open an issue or submit a pull request.
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.

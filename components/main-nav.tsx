@@ -3,8 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Settings, LayoutDashboard, Users, BookOpen, Calendar, FileCode, Bot } from "lucide-react"
-import { useMobile } from "@/hooks/use-mobile"
+import { Settings, LayoutDashboard, Users, BookOpen, Calendar } from "lucide-react"
+import useMobile from "@/hooks/use-mobile"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Button } from "@/components/ui/button"
 
@@ -36,18 +36,6 @@ export function MainNav() {
       label: "캘린더",
       icon: <Calendar className="h-4 w-4" />,
       active: pathname?.startsWith("/dashboard/calendar"),
-    },
-    {
-      href: "/dashboard/apps-script",
-      label: "Apps Script",
-      icon: <FileCode className="h-4 w-4" />,
-      active: pathname?.startsWith("/dashboard/apps-script"),
-    },
-    {
-      href: "/dashboard/automations",
-      label: "자동화",
-      icon: <Bot className="h-4 w-4" />,
-      active: pathname?.startsWith("/dashboard/automations"),
     },
     {
       href: "/settings",

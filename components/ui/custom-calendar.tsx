@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import { ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react"
-import { DayPicker } from "react-day-picker"
+import { DayPicker, type DropdownProps } from "react-day-picker"
 import { format, isToday, isSameMonth, isWeekend, parseISO, isValid } from "date-fns"
-import ko from "date-fns/locale/ko"
+import { ko } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { motion } from "@/components/ui/motion"
@@ -82,7 +82,7 @@ export function CustomCalendar({
   const components = {
     IconLeft: () => <ChevronLeft className="h-5 w-5" />,
     IconRight: () => <ChevronRight className="h-5 w-5" />,
-    Dropdown: ({ value, onChange, children, ...props }: any) => {
+    Dropdown: ({ value, onChange, children, ...props }: DropdownProps) => {
       return (
         <select
           value={value}
@@ -94,7 +94,7 @@ export function CustomCalendar({
         </select>
       )
     },
-    Caption: ({ displayMonth }: any) => {
+    Caption: ({ displayMonth }) => {
       if (!displayMonth || !isValid(displayMonth)) {
         return <div className="flex justify-center items-center h-12 text-lg font-semibold">Invalid Month</div>
       }
@@ -114,7 +114,7 @@ export function CustomCalendar({
         return <div className="flex justify-center items-center h-12 text-lg font-semibold">Invalid Month</div>
       }
     },
-    Day: ({ date, displayMonth }: any) => {
+    Day: ({ date, displayMonth }) => {
       // Validate dates first
       if (!date || !isValid(date) || !displayMonth || !isValid(displayMonth)) {
         return (
@@ -221,12 +221,10 @@ export function CustomCalendar({
         )
       }
     },
-    Row: ({ children }: any) => <tr className="flex w-full">{children}</tr>,
-    Cell: ({ children }: any) => <td className="flex-1 h-full min-w-[100px]">{children}</td>,
-    Head: ({ children }: any) => (
-      <thead className="flex border-b border-gray-200 dark:border-gray-800">{children}</thead>
-    ),
-    HeadCell: ({ children }: any) => (
+    Row: ({ children }) => <tr className="flex w-full">{children}</tr>,
+    Cell: ({ children }) => <td className="flex-1 h-full min-w-[100px]">{children}</td>,
+    Head: ({ children }) => <thead className="flex border-b border-gray-200 dark:border-gray-800">{children}</thead>,
+    HeadCell: ({ children }) => (
       <th className="flex-1 py-3 text-center text-sm font-medium text-gray-500 dark:text-gray-400 min-w-[100px]">
         {children}
       </th>
