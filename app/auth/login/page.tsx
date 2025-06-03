@@ -18,6 +18,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [detailedError, setDetailedError] = useState<string>("")
+  const [isDebugging, setIsDebugging] = useState(false)
 
   const { signIn, error } = useAuth()
   const router = useRouter()
@@ -25,15 +27,24 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setDetailedError("")
 
     try {
+      console.log("로그인 시도:", { email, passwordLength: password.length })
+
       const result = await signIn(email, password)
+      console.log("로그인 결과:", result)
 
       if (result.success) {
+        console.log("로그인 성공, 대시보드로 이동")
         router.push("/dashboard")
+      } else {
+        console.error("로그인 실패:", result.error)
+        setDetailedError(`로그인 실패: ${result.error?.message || "알 수 없는 오류"}`)
       }
     } catch (error) {
       console.error("Login error:", error)
+      setDetailedError(`예외 발생: ${error instanceof Error ? error.message : "알 수 없는 오류"}`)
     } finally {
       setIsLoading(false)
     }
@@ -49,10 +60,28 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
-            {error && (
+            {(error || detailedError) && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {error || detailedError}
+                  <Button
+                    variant="link"
+                    size="sm"
+                    onClick={() => setIsDebugging(!isDebugging)}
+                    className="p-0 h-auto ml-2"
+                  >
+                    {isDebugging ? "디버그 숨기기" : "디버그 정보"}
+                  </Button>
+                </AlertDescription>
               </Alert>
+            )}
+
+            {isDebugging && (
+              <div className="text-xs bg-gray-100 p-2 rounded">
+                <div>이메일: {email}</div>
+                <div>비밀번호 길이: {password.length}</div>
+                <div>환경: {process.env.NODE_ENV}</div>
+              </div>
             )}
 
             <div className="space-y-2">
