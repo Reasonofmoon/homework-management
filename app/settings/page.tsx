@@ -3,54 +3,117 @@
 import { useState } from "react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, XCircle, AlertTriangle, ExternalLink } from "lucide-react"
+import { CheckCircle, XCircle, AlertTriangle, ExternalLink, RefreshCw } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { PostConfigTest } from "@/components/post-config-test"
+import { AdvancedConnectionTest } from "@/components/advanced-connection-test"
 
 const SettingsPage = () => {
   const [diagnostics, setDiagnostics] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const runDiagnostics = async () => {
+  const runAdvancedDiagnostics = async () => {
     setIsLoading(true)
     try {
       const results: any = {
+        timestamp: new Date().toISOString(),
         environment: {
           hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
           hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
           currentDomain: window.location.hostname,
+          fullUrl: window.location.href,
+          userAgent: navigator.userAgent,
           isProduction: process.env.NODE_ENV === "production",
         },
         supabase: {},
+        network: {},
         auth: {},
       }
 
-      // Supabase 연결 테스트
-      if (results.environment.hasUrl && results.environment.hasKey) {
-        const { createClient } = await import("@supabase/supabase-js")
-        const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+      // 환경 변수 상세 확인
+      if (results.environment.hasUrl) {
+        const url = process.env.NEXT_PUBLIC_SUPABASE_URL!
+        results.environment.urlDetails = {
+          length: url.length,
+          startsWithHttps: url.startsWith("https://"),
+          containsSupabase: url.includes("supabase"),
+          domain: url.split("//")[1]?.split(".")[0] || "unknown",
+        }
+      }
 
-        const { data, error } = await supabase.auth.getSession()
-        results.supabase.connectionSuccess = !error
-        results.supabase.error = error?.message
+      // 네트워크 연결 테스트
+      try {
+        const networkTest = await fetch("https://httpbin.org/get", {
+          method: "GET",
+          signal: AbortSignal.timeout(5000),
+        })
+        results.network.externalConnection = networkTest.ok
+        results.network.externalStatus = networkTest.status
+      } catch (e: any) {
+        results.network.externalConnection = false
+        results.network.externalError = e.message
+      }
 
-        // 사용자 테스트
+      // Supabase 도메인 직접 테스트
+      if (results.environment.hasUrl) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
         try {
-          const { error: authError } = await supabase.auth.signInWithPassword({
-            email: "soundfury37@gmail.com",
-            password: "test-password",
+          const domainTest = await fetch(`${supabaseUrl}/rest/v1/`, {
+            method: "GET",
+            headers: {
+              apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+              Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!}`,
+            },
+            signal: AbortSignal.timeout(10000),
           })
-          results.auth.userExists = !authError?.message?.includes("Invalid login credentials")
-          results.auth.errorMessage = authError?.message
+          results.supabase.domainReachable = domainTest.ok
+          results.supabase.domainStatus = domainTest.status
+          results.supabase.domainResponse = await domainTest.text()
         } catch (e: any) {
-          results.auth.testError = e.message
+          results.supabase.domainReachable = false
+          results.supabase.domainError = e.message
+        }
+      }
+
+      // Supabase Auth 테스트
+      if (results.environment.hasUrl && results.environment.hasKey) {
+        try {
+          const { createClient } = await import("@supabase/supabase-js")
+          const supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+              auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false,
+              },
+            },
+          )
+
+          // 세션 확인
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession()
+          results.auth.sessionCheck = {
+            success: !sessionError,
+            error: sessionError?.message,
+            hasSession: !!sessionData.session,
+          }
+
+          // 사용자 확인 (실제 로그인 시도 없이)
+          const { data: userData, error: userError } = await supabase.auth.getUser()
+          results.auth.userCheck = {
+            success: !userError,
+            error: userError?.message,
+            hasUser: !!userData.user,
+          }
+        } catch (e: any) {
+          results.auth.clientError = e.message
         }
       }
 
       setDiagnostics(results)
     } catch (error: any) {
-      setDiagnostics({ error: error.message })
+      setDiagnostics({ error: error.message, timestamp: new Date().toISOString() })
     } finally {
       setIsLoading(false)
     }
@@ -96,121 +159,165 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="md:col-span-2 lg:col-span-3">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5" />
-              로그인 문제 진단
+              고급 연결 진단
             </CardTitle>
-            <CardDescription>배포 환경에서 로그인 문제를 진단합니다.</CardDescription>
+            <CardDescription>Connection timeout 문제를 상세히 분석합니다.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <Button onClick={runDiagnostics} disabled={isLoading}>
-              {isLoading ? "진단 중..." : "진단 실행"}
+            <Button onClick={runAdvancedDiagnostics} disabled={isLoading} className="w-full">
+              {isLoading ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  상세 진단 중...
+                </>
+              ) : (
+                "상세 진단 실행"
+              )}
             </Button>
 
             {diagnostics && !diagnostics.error && (
-              <div className="space-y-4">
-                <div>
-                  <h4 className="font-semibold mb-2">환경 변수 상태</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(diagnostics.environment.hasUrl)}
-                      <span>SUPABASE_URL:</span>
-                      <Badge variant={diagnostics.environment.hasUrl ? "default" : "destructive"}>
-                        {diagnostics.environment.hasUrl ? "설정됨" : "누락"}
-                      </Badge>
+              <div className="space-y-6">
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <h4 className="font-semibold mb-2">환경 정보</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(diagnostics.environment.hasUrl)}
+                        <span>Supabase URL: {diagnostics.environment.hasUrl ? "설정됨" : "누락"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(diagnostics.environment.hasKey)}
+                        <span>API Key: {diagnostics.environment.hasKey ? "설정됨" : "누락"}</span>
+                      </div>
+                      {diagnostics.environment.urlDetails && (
+                        <div className="ml-6 text-xs text-muted-foreground">
+                          <div>길이: {diagnostics.environment.urlDetails.length}자</div>
+                          <div>HTTPS: {diagnostics.environment.urlDetails.startsWithHttps ? "✓" : "✗"}</div>
+                          <div>도메인: {diagnostics.environment.urlDetails.domain}</div>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusIcon(diagnostics.environment.hasKey)}
-                      <span>SUPABASE_KEY:</span>
-                      <Badge variant={diagnostics.environment.hasKey ? "default" : "destructive"}>
-                        {diagnostics.environment.hasKey ? "설정됨" : "누락"}
-                      </Badge>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold mb-2">네트워크 연결</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(diagnostics.network.externalConnection)}
+                        <span>외부 연결: {diagnostics.network.externalConnection ? "정상" : "실패"}</span>
+                      </div>
+                      {diagnostics.network.externalError && (
+                        <div className="ml-6 text-xs text-red-500">{diagnostics.network.externalError}</div>
+                      )}
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold mb-2">Supabase 연결</h4>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(diagnostics.supabase.connectionSuccess)}
-                    <span>연결 상태:</span>
-                    <Badge variant={diagnostics.supabase.connectionSuccess ? "default" : "destructive"}>
-                      {diagnostics.supabase.connectionSuccess ? "성공" : "실패"}
-                    </Badge>
-                  </div>
-                  {diagnostics.supabase.error && (
-                    <Alert variant="destructive" className="mt-2">
-                      <AlertDescription>{diagnostics.supabase.error}</AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">사용자 계정</h4>
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(diagnostics.auth.userExists)}
-                    <span>soundfury37@gmail.com:</span>
-                    <Badge variant={diagnostics.auth.userExists ? "default" : "destructive"}>
-                      {diagnostics.auth.userExists ? "계정 존재" : "계정 없음"}
-                    </Badge>
-                  </div>
-                  {diagnostics.auth.errorMessage && (
-                    <Alert variant="destructive" className="mt-2">
-                      <AlertDescription>{diagnostics.auth.errorMessage}</AlertDescription>
-                    </Alert>
-                  )}
-                </div>
-
-                <div>
-                  <h4 className="font-semibold mb-2">해결 방법</h4>
-                  <div className="space-y-2">
-                    <Alert>
-                      <AlertDescription>
-                        <strong>1. Supabase 도메인 설정 확인</strong>
-                        <br />
-                        Site URL: https://{diagnostics.environment.currentDomain}
-                        <br />
-                        Redirect URLs: https://{diagnostics.environment.currentDomain}/**
-                      </AlertDescription>
-                    </Alert>
-
-                    {diagnostics.auth.userExists === false && (
-                      <Alert>
+                  <h4 className="font-semibold mb-2">Supabase 도메인 테스트</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(diagnostics.supabase.domainReachable)}
+                      <span>도메인 접근: {diagnostics.supabase.domainReachable ? "성공" : "실패"}</span>
+                      {diagnostics.supabase.domainStatus && (
+                        <Badge variant="outline">HTTP {diagnostics.supabase.domainStatus}</Badge>
+                      )}
+                    </div>
+                    {diagnostics.supabase.domainError && (
+                      <Alert variant="destructive">
                         <AlertDescription>
-                          <strong>2. 사용자 계정 생성</strong>
-                          <br />
-                          soundfury37@gmail.com 계정이 없습니다. 회원가입을 먼저 진행하세요.
+                          <strong>도메인 연결 오류:</strong> {diagnostics.supabase.domainError}
                         </AlertDescription>
                       </Alert>
                     )}
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div>
+                  <h4 className="font-semibold mb-2">인증 시스템 테스트</h4>
+                  <div className="space-y-2 text-sm">
+                    {diagnostics.auth.sessionCheck && (
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(diagnostics.auth.sessionCheck.success)}
+                        <span>세션 확인: {diagnostics.auth.sessionCheck.success ? "성공" : "실패"}</span>
+                      </div>
+                    )}
+                    {diagnostics.auth.userCheck && (
+                      <div className="flex items-center gap-2">
+                        {getStatusIcon(diagnostics.auth.userCheck.success)}
+                        <span>사용자 확인: {diagnostics.auth.userCheck.success ? "성공" : "실패"}</span>
+                      </div>
+                    )}
+                    {diagnostics.auth.clientError && (
+                      <Alert variant="destructive">
+                        <AlertDescription>
+                          <strong>클라이언트 오류:</strong> {diagnostics.auth.clientError}
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold mb-2">해결 방법</h4>
+                  <div className="space-y-2">
+                    {!diagnostics.network.externalConnection && (
+                      <Alert variant="destructive">
+                        <AlertDescription>
+                          <strong>네트워크 문제:</strong> 인터넷 연결을 확인하거나 방화벽 설정을 점검하세요.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    {!diagnostics.supabase.domainReachable && diagnostics.network.externalConnection && (
+                      <Alert variant="destructive">
+                        <AlertDescription>
+                          <strong>Supabase 도메인 문제:</strong>
+                          <br />
+                          1. 환경 변수의 URL이 올바른지 확인
+                          <br />
+                          2. Supabase 프로젝트가 활성화되어 있는지 확인
+                          <br />
+                          3. API 키가 유효한지 확인
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <Alert>
+                      <AlertDescription>
+                        <strong>추가 확인사항:</strong>
+                        <br />• 브라우저 개발자 도구 → Network 탭에서 실패하는 요청 확인
+                        <br />• Supabase 대시보드에서 프로젝트 상태 확인
+                        <br />• 다른 브라우저나 시크릿 모드에서 테스트
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 flex-wrap">
                   <Button variant="outline" size="sm" asChild>
-                    <a
-                      href="https://supabase.com/dashboard/project/gvtegncddn/auth/url-configuration"
-                      target="_blank"
-                      rel="noreferrer"
-                    >
+                    <a href="https://supabase.com/dashboard/project/gvtegncddn" target="_blank" rel="noreferrer">
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Supabase URL 설정
+                      Supabase 대시보드
                     </a>
                   </Button>
                   <Button variant="outline" size="sm" asChild>
                     <a
-                      href="https://supabase.com/dashboard/project/gvtegncddn/auth/users"
+                      href="https://supabase.com/dashboard/project/gvtegncddn/settings/api"
                       target="_blank"
                       rel="noreferrer"
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
-                      Supabase 사용자 관리
+                      API 설정 확인
                     </a>
                   </Button>
-                  <Button variant="outline" size="sm" asChild>
-                    <a href="/auth/signup">회원가입 페이지</a>
+                  <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    페이지 새로고침
                   </Button>
                 </div>
               </div>
@@ -218,13 +325,17 @@ const SettingsPage = () => {
 
             {diagnostics?.error && (
               <Alert variant="destructive">
-                <AlertDescription>진단 실행 중 오류: {diagnostics.error}</AlertDescription>
+                <AlertDescription>
+                  <strong>진단 실행 중 오류:</strong> {diagnostics.error}
+                  <br />
+                  <small>시간: {diagnostics.timestamp}</small>
+                </AlertDescription>
               </Alert>
             )}
           </CardContent>
         </Card>
 
-        <PostConfigTest />
+        <AdvancedConnectionTest />
       </div>
     </div>
   )

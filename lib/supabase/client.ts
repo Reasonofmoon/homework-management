@@ -1,46 +1,40 @@
 import { createClient as createSupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "./types"
 
-// Create a more direct client without relying on Next.js helpers
+// Singleton pattern for client-side usage
+let supabaseClient: ReturnType<typeof createSupabaseClient<Database>> | null = null
+
 export const createClient = () => {
+  // 이미 클라이언트가 존재하면 재사용
+  if (supabaseClient) {
+    return supabaseClient
+  }
+
   try {
     // Get environment variables
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
 
-    // Log for debugging (will be removed in production)
-    console.log("Initializing Supabase with:", {
-      urlLength: supabaseUrl.length,
-      keyLength: supabaseAnonKey.length,
-    })
-
-    // Create client directly without URL validation
-    return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey, {
+    // Create client only once
+    supabaseClient = createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storageKey: "homework-manager-auth", // 고유한 storage key
       },
     })
+
+    return supabaseClient
   } catch (error) {
     console.error("Failed to initialize Supabase client:", error)
     throw error
   }
 }
 
-// Singleton pattern for client-side usage
-let supabaseClient: ReturnType<typeof createClient> | null = null
-
+// 기존 함수들은 새로운 createClient 사용
 export const getSupabaseClient = () => {
-  if (!supabaseClient) {
-    try {
-      supabaseClient = createClient()
-    } catch (error) {
-      console.error("Error getting Supabase client:", error)
-      throw error
-    }
-  }
-  return supabaseClient
+  return createClient()
 }
 
 // Error handling utility
@@ -113,7 +107,7 @@ export const testSupabaseConnection = async () => {
   }
 }
 
-// Database health check with better error handling - ADDED MISSING EXPORT
+// Database health check with better error handling
 export const checkDatabaseHealth = async () => {
   try {
     const supabase = getSupabaseClient()
@@ -125,7 +119,7 @@ export const checkDatabaseHealth = async () => {
     }
 
     // Check if required tables exist
-    const tables = ["profiles", "classes", "students", "assignments", "student_assignments"]
+    const tables = ["profiles", "classes", "students", "assignments", "assignment_students"]
     const results = await Promise.all(
       tables.map(async (table) => {
         try {
