@@ -8,7 +8,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { CardContent, CardFooter } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Eye, EyeOff } from "lucide-react"
 import { useAuth } from "@/hooks/use-auth"
@@ -37,7 +37,8 @@ export default function LoginPage() {
 
       if (result.success) {
         console.log("로그인 성공, 대시보드로 이동")
-        router.push("/dashboard")
+        // Use window.location for more reliable redirect
+        window.location.href = "/dashboard"
       } else {
         console.error("로그인 실패:", result.error)
         setDetailedError(`로그인 실패: ${result.error?.message || "알 수 없는 오류"}`)
@@ -51,14 +52,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">로그인</CardTitle>
-          <CardDescription className="text-center">학생 숙제 관리 시스템에 로그인하세요</CardDescription>
-        </CardHeader>
-
-        <form onSubmit={handleSubmit}>
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="max-w-md w-full mx-auto bg-white p-8 rounded-lg shadow">
+        <h1 className="text-2xl font-bold text-center mb-6">로그인</h1>
+        <form onSubmit={handleSubmit} className="space-y-4">
           <CardContent className="space-y-4">
             {(error || detailedError) && (
               <Alert variant="destructive">
@@ -124,29 +121,24 @@ export default function LoginPage() {
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading || !email || !password}>
+            <Button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700"
+              disabled={isLoading || !email || !password}
+            >
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               로그인
             </Button>
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">계정이 없으신가요? </span>
-              <Link href="/auth/signup" className="text-primary hover:underline font-medium">
+              <Link href="/auth/signup" className="text-blue-600 hover:underline">
                 회원가입
-              </Link>
-            </div>
-
-            <div className="text-center">
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-muted-foreground hover:text-primary hover:underline"
-              >
-                비밀번호를 잊으셨나요?
               </Link>
             </div>
           </CardFooter>
         </form>
-      </Card>
+      </div>
     </div>
   )
 }

@@ -85,12 +85,8 @@ export const useAuth = () => {
         loading: false,
       }))
 
-      // Redirect based on auth state
-      if (event === "SIGNED_OUT") {
-        router.push("/auth/login")
-      } else if (event === "SIGNED_IN") {
-        router.push("/dashboard")
-      }
+      // Remove automatic redirects from here to prevent conflicts
+      // Let the middleware and components handle redirects
     })
 
     return () => {

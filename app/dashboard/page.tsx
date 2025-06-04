@@ -16,7 +16,7 @@ import { LocalModeBanner } from "@/components/local-mode-banner"
 
 export default function DashboardPage() {
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="min-h-screen bg-gray-50 p-8">
       <header className="border-b border-blue-100 dark:border-blue-900 bg-white dark:bg-gray-950">
         <div className="container flex h-16 items-center px-2 sm:px-4">
           <MainNav />
@@ -73,6 +73,21 @@ export default function DashboardPage() {
               </Card>
 
               <DatabaseStatus />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-lg font-semibold mb-2">학생 관리</h2>
+                <p className="text-gray-600">학생 정보를 관리하세요</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-lg font-semibold mb-2">숙제 관리</h2>
+                <p className="text-gray-600">숙제를 생성하고 배정하세요</p>
+              </div>
+              <div className="bg-white p-6 rounded-lg shadow">
+                <h2 className="text-lg font-semibold mb-2">진도 추적</h2>
+                <p className="text-gray-600">학습 진도를 확인하세요</p>
+              </div>
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
