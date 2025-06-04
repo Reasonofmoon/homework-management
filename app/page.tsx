@@ -1,50 +1,90 @@
-import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+"use client"
+
 import Link from "next/link"
-// Update the import to use default export if needed
-import TutorialContent from "@/components/tutorial-content"
-import { Card, CardContent } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { BookOpen, Users, ClipboardList, BarChart3 } from "lucide-react"
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col min-h-screen">
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-gradient-to-b from-white to-blue-50 dark:from-gray-950 dark:to-blue-950">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-              <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tighter text-blue-800 dark:text-blue-300 sm:text-5xl xl:text-6xl/none">
-                    학생 숙제 관리 시스템
-                  </h1>
-                  <p className="max-w-[600px] text-blue-700/80 dark:text-blue-400/80 md:text-xl">
-                    구글 시트와 연동하여 학생별 숙제를 효율적으로 관리하고 추적하세요. 간편한 인터페이스로 숙제 할당 및
-                    진행 상황을 한눈에 확인할 수 있습니다.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Link href="/dashboard">
-                    <Button size="lg" className="gap-1.5 bg-blue-600 hover:bg-blue-700 text-white">
-                      시작하기
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              <div className="flex items-center justify-center">
-                <Card className="w-full border-blue-200 dark:border-blue-800 shadow-lg">
-                  <CardContent className="p-0">
-                    <ScrollArea className="h-[500px]">
-                      <TutorialContent />
-                    </ScrollArea>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
-          </div>
-        </section>
-      </main>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <div className="container mx-auto px-4 py-16">
+        {/* Header */}
+        <div className="text-center mb-16">
+          <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-4">학생 숙제 관리 시스템</h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            효율적인 숙제 관리로 더 나은 교육 환경을 만들어보세요
+          </p>
+        </div>
+
+        {/* Features */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+          <Card className="text-center">
+            <CardHeader>
+              <Users className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+              <CardTitle>클래스 관리</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>클래스를 생성하고 학생들을 효율적으로 관리하세요</CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <BookOpen className="h-12 w-12 text-green-600 mx-auto mb-4" />
+              <CardTitle>학생 등록</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>학생을 등록하고 클래스에 배정하여 체계적으로 관리하세요</CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <ClipboardList className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+              <CardTitle>숙제 배정</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>숙제를 생성하고 학생들에게 배정하여 학습을 관리하세요</CardDescription>
+            </CardContent>
+          </Card>
+
+          <Card className="text-center">
+            <CardHeader>
+              <BarChart3 className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+              <CardTitle>진도 추적</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription>학생들의 진도를 추적하고 성과를 평가하세요</CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CTA Buttons */}
+        <div className="text-center space-x-4">
+          <Button asChild size="lg">
+            <Link href="/auth/login">로그인</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg">
+            <Link href="/auth/signup">회원가입</Link>
+          </Button>
+        </div>
+
+        {/* Additional Info */}
+        <div className="mt-16 text-center">
+          <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+              <CardTitle>시작하기</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <CardDescription className="text-base">
+                계정을 생성하여 클래스를 만들고, 학생들을 등록한 후 숙제를 배정해보세요. 직관적인 인터페이스로 쉽게 학습
+                진도를 관리할 수 있습니다.
+              </CardDescription>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   )
 }

@@ -4,15 +4,12 @@ import type React from "react"
 import { createContext, useContext, useEffect, useState } from "react"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import type { Database } from "@/lib/supabase/types"
-import { createClient, testSupabaseConnection, validateSupabaseConfig } from "@/lib/supabase/client"
-import { SupabaseErrorFallback } from "../supabase-error-fallback"
 
 interface SupabaseContextType {
   supabase: SupabaseClient<Database> | null
   isConnected: boolean
   connectionError: string | null
   isLoading: boolean
-  configValid: boolean
   retryConnection: () => void
 }
 
@@ -21,7 +18,14 @@ const SupabaseContext = createContext<SupabaseContextType | undefined>(undefined
 export const useSupabase = () => {
   const context = useContext(SupabaseContext)
   if (!context) {
-    throw new Error("useSupabase must be used within a SupabaseProvider")
+    // 컨텍스트가 없어도 기본값 반환 (오류 방지)
+    return {
+      supabase: null,
+      isConnected: false,
+      connectionError: "Provider not found",
+      isLoading: false,
+      retryConnection: () => {},
+    }
   }
   return context
 }
@@ -30,46 +34,40 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [supabase, setSupabase] = useState<SupabaseClient<Database> | null>(null)
   const [isConnected, setIsConnected] = useState(false)
   const [connectionError, setConnectionError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [configValid, setConfigValid] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
 
   const initializeSupabase = async () => {
-    setIsLoading(true)
-    setConnectionError(null)
-
     try {
-      // Basic validation
-      const configValidation = validateSupabaseConfig()
-      setConfigValid(configValidation.isValid)
+      setIsLoading(true)
+      setConnectionError(null)
 
-      if (!configValidation.config.hasUrl || !configValidation.config.hasKey) {
+      // 환경 변수 확인
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+      if (!supabaseUrl || !supabaseKey) {
         throw new Error("환경 변수가 설정되지 않았습니다.")
       }
 
-      // Create client
-      const client = createClient()
+      // 지연 로딩으로 Supabase 클라이언트 생성
+      const { createClient } = await import("@supabase/supabase-js")
+
+      const client = createClient<Database>(supabaseUrl, supabaseKey, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storageKey: "homework-manager-auth",
+        },
+      })
+
       setSupabase(client)
-
-      // Test connection with timeout
-      const connectionPromise = testSupabaseConnection()
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error("Connection timeout")), 15000),
-      )
-
-      const result = (await Promise.race([connectionPromise, timeoutPromise])) as any
-
-      if (result.success) {
-        setIsConnected(true)
-        setConnectionError(null)
-        setConfigValid(true)
-      } else {
-        setIsConnected(false)
-        setConnectionError(result.message || "Connection failed")
-      }
+      setIsConnected(true)
+      console.log("Supabase Provider 초기화 성공")
     } catch (error: any) {
-      console.error("Failed to initialize Supabase:", error)
+      console.error("Supabase Provider 초기화 실패:", error)
+      setConnectionError(error.message)
       setIsConnected(false)
-      setConnectionError(error.message || "Supabase 초기화에 실패했습니다.")
     } finally {
       setIsLoading(false)
     }
@@ -80,20 +78,13 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    initializeSupabase()
-  }, [])
+    // 지연 초기화 (페이지 로드 후)
+    const timer = setTimeout(() => {
+      initializeSupabase()
+    }, 100)
 
-  // Show error fallback if there's a connection error
-  if (!isLoading && (connectionError || !configValid)) {
-    return (
-      <SupabaseErrorFallback
-        error={connectionError}
-        isLoading={isLoading}
-        configValid={configValid}
-        onRetry={retryConnection}
-      />
-    )
-  }
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <SupabaseContext.Provider
@@ -102,7 +93,6 @@ export function SupabaseProvider({ children }: { children: React.ReactNode }) {
         isConnected,
         connectionError,
         isLoading,
-        configValid,
         retryConnection,
       }}
     >
